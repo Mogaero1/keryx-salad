@@ -12,12 +12,16 @@ RUN wget -q "https://github.com/Keryx-Labs/keryx-miner/releases/download/${KERYX
     && chmod +x /usr/local/bin/keryx-miner \
     && rm /tmp/keryx.zip
 
-RUN useradd -m -s /bin/bash miner
-USER miner
-WORKDIR /home/miner
+# Create writable directories for model cache
+RUN mkdir -p /data/models /data/cache \
+    && chmod -R 777 /data
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD pgrep keryx-miner || exit 1
+# Set cache/model dirs to writable paths
+ENV KERYX_CACHE_DIR=/data/cache
+ENV HF_HOME=/data/cache/huggingface
+ENV HOME=/data
+
+WORKDIR /data
 
 ENTRYPOINT ["/usr/local/bin/keryx-miner"]
 CMD ["--mining-address", "keryx:REPLACE_WITH_YOUR_ADDRESS"]
