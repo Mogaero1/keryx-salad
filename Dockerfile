@@ -1,4 +1,4 @@
-# Keryx Miner for SaladCloud
+# Keryx Miner for SaladCloud (with peer fallback)
 FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,5 +23,8 @@ ENV HOME=/data
 
 WORKDIR /data
 
-ENTRYPOINT ["/usr/local/bin/keryx-miner"]
-CMD ["--mining-address", "keryx:REPLACE_WITH_YOUR_ADDRESS"]
+# Copy peer fallback script
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+ENTRYPOINT ["/usr/local/bin/start.sh"]
