@@ -1,0 +1,68 @@
+# Keryx Miner — GitHub Actions Auto-Build
+# Push image ke GHCR otomatis setiap kali ada update
+# File: .github/workflows/build-keryx.yml
+# Simpan di repo: github.com/0xmultiserver-crypto/keryx-salad
+
+name: Build & Push Keryx Miner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Manual trigger
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/keryx-miner
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value={{date 'YYYYMMDD'}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platform: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            KERYX_VERSION=v0.3.2-OPoI
+
+      - name: Print deployment info
+        run: |
+          echo "============================================"
+          echo "✅ Image pushed successfully!"
+          echo "============================================"
+          echo "Image: ghcr.io/${{ github.repository }}/keryx-miner:latest"
+          echo ""
+          echo "Deploy di SaladCloud:"
+          echo "1. Login ke https://portal.salad.com"
+          echo "2. Buat Container Group baru"
+          echo "3. Image: ghcr.io/${{ github.repository }}/keryx-miner:latest"
+          echo "4. Command: --mining-address keryx:qz8x35t7fzf97s09vyy2puyqx370wxc2m6pmq7vxvputm5t5v5w7uf826gsr9"
+          echo "5. GPU: NVIDIA RTX 4070 Ti atau lebih tinggi"
+          echo "============================================"
